@@ -1,5 +1,5 @@
 # TokenTool
-To execute please follow one of the following two formats:
+- To execute please follow one of the following two formats:
   - TokenTool.exe outputFile.txt string123 k
   - TokenTool.exe string123 k
 Where:
