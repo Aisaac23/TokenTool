@@ -4,14 +4,14 @@
 
 #define MAX_TOKEN_SIZE 5
 #define MAX_INPUT_SIZE 31
-#define ONE_MB 1024*1024
+#define ONE_M 1024*1024
 #define TWENTY 20
 
 void rotate(unsigned int newSize, unsigned char * token);
 unsigned long long factorial(unsigned int n);
 void tokenPermutations(unsigned int newSize, unsigned char * permutedToken);
 unsigned int stringSearch(char * str, char target);
-void tokenCombinations(unsigned int tokenSize, char token[], char inputString[31]);
+void tokenCombinations(char token[], char inputString[31]);
 unsigned char** prepareStorage(unsigned int tokenSize, unsigned int inputSize);
 unsigned long long calculateTokens(unsigned int tokenSize, unsigned int inputSize);
 int validateArguments(int argc, char * argv[]);
@@ -25,6 +25,7 @@ unsigned long long nTokens;
 
 int main(int argc, char * argv[])
 {	
+
 	unsigned char token[11];
 	unsigned int tokenSize, inputSize, blockSize;
 	if(argc <= 1)
@@ -40,12 +41,13 @@ int main(int argc, char * argv[])
 
 	tokenSize = atoi(argv[argc-1]);
 	inputSize = strlen(argv[argc-2]);
-	
+
 	strncpy(token, argv[argc-2], tokenSize*sizeof(unsigned char));
 	token[tokenSize] = '\0';
+
 	strg = prepareStorage(tokenSize, inputSize);
 
-	tokenCombinations(tokenSize,token, argv[argc-2]);
+	tokenCombinations(token, argv[argc-2]);
 	
 	if(!file)
 	{
@@ -62,6 +64,9 @@ int main(int argc, char * argv[])
 	
 	if(file)
 		fclose(tokenFile);
+	else
+		free(strg);
+	
 	return EXIT_SUCCESS;
 }
 
@@ -96,14 +101,13 @@ void printToken(unsigned char *token)
 
 unsigned long long calculateTokens(unsigned int tokenSize, unsigned int inputSize)
 {
-	return (inputSize <= 20) ? ( factorial(inputSize)/factorial(inputSize-tokenSize) ): (TWENTY*ONE_MB);
+	return (inputSize <= 20) ? ( factorial(inputSize)/factorial(inputSize-tokenSize) ): (TWENTY*ONE_M);
 }
 
 unsigned char** prepareStorage(unsigned int tokenSize, unsigned int inputSize)
 {
-	unsigned long long ntokens = calculateTokens(tokenSize, inputSize);
+	unsigned long long ntokens = calculateTokens(tokenSize, inputSize), c = 0;
 	unsigned char** storage = (unsigned char**) calloc( ntokens, sizeof(unsigned char*) );
-	unsigned long long  c = 0;
 	
 	while(c < ntokens)
 	{
@@ -155,8 +159,9 @@ unsigned int stringSearch(char * str, char target)
 	return -1;
 }
 
-void tokenCombinations(unsigned int tokenSize, char token[], char inputString[31])
+void tokenCombinations(char token[], char inputString[31])
 {
+	int tokenSize = strlen(token);
 	int range = tokenSize-2, repIndex = tokenSize-2, index = tokenSize-1, inputSize = strlen(inputString);
 	char permutedToken[11];
 	
@@ -203,12 +208,14 @@ int validateArguments(int argc, char * argv[])
 	{
 		if( (tokenFile = fopen(argv[1], "a") )== NULL)
 			perror("Error trying to open file: ");
+		else
+		{
+			fclose(tokenFile);
+			return 1;
+		}
 	}
 	else
-	{
-		fclose(tokenFile);
 		return 1;
-	}
-
+	
 	return 0;
 }
