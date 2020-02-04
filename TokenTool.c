@@ -2,12 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include "combperm.h"
 
-void rotate(unsigned int newLength, char * token);
-void tokenPermutations(unsigned int newLength, char * permutedToken);
-void tokenCombinations(char token[], char inputString[31]);
 void printToken(char *token);
-
+void permute(char *token);
 int menu(char *argv[]);
 
 FILE *tokenFile = NULL;
@@ -23,21 +21,32 @@ int main(int argc, char * argv[])
 	if( menu(argv) != -1)
 	{
 		if(save)
+		{
+			printf("Saving your tokens in: %s ...\n", argv[2]);
 			tokenFile = fopen(argv[2], "a");
-		
+			if(tokenFile == NULL)
+			{
+				printf("It seems that the name of the file is invalid or the file cannot be oppened.\n");
+				return EXIT_FAILURE;
+			}
+		}
+		else
+			tokenFile = stdout;
+
 		tokenLength = atoi(argv[argc-1]);
 		
 		token = calloc( tokenLength, sizeof(char) );
 		strncpy(token, argv[argc-2], tokenLength*sizeof(char));
 		token[tokenLength] = '\0';
 
-		tokenCombinations(token, argv[argc-2]);
-		
+		combinations(argv[argc-2], tokenLength, permute);
+		printf("\n");
 		if(save)
 			fclose(tokenFile);
 		return EXIT_SUCCESS;
 	}	
-
+	
+	printf("There are arguments missing or with the wrong format.");
 	return EXIT_FAILURE;
 }
 
@@ -46,7 +55,7 @@ int menu(char *argv[])
 	char opc[1];
 	opc[0] = argv[1][1];
 	
-	if(argv[1][0])
+	if(argv[1][0] != '-')
 		return -1;
 
 	switch(opc[0])
@@ -68,84 +77,27 @@ int menu(char *argv[])
 
 void printToken(char *token)
 {
-	static unsigned long count;
-	if(save)
+	static unsigned long count=1;
+	fprintf(tokenFile, token);
+	fprintf(tokenFile, ",");
+	if(count%100==0)
 	{
-		fprintf(tokenFile, token);
-		fprintf(tokenFile, ",");
-		if(count > 0 && count%100==0)
+		fprintf(tokenFile, "\n");
+		if(!save)
 		{
-			count = 1;
-			fprintf(tokenFile, "\n");
+			printf("\n%lu tokens printed so far, press any key to continue...", count);
+			getchar();
 		}
-		count++;
 	}
-	else
-		printf("%s,", token);
+	count++;
 }
 
-void rotate(unsigned int newLength, char * token)
+void permute(char *token)
 {
-	int k, size = strlen(token);
-    	int position = size - newLength;
-	char temp = token[position];
-
-	for(k=position+1; k<size; k++)      
-	token[k-1] = token[k];
-	token[k-1] = temp;  
+	unsigned const int len = strlen(token);
+	char tempCopy[len];
+	strcpy(tempCopy, token);
+	charPermutations(len, tempCopy, printToken);
 }
 
-void tokenPermutations(unsigned int newLength, char * permutedToken)
-{
-	if(newLength == 1)
-		return;
-	for(int a = 0; a<newLength; a++)
-	{
-		tokenPermutations(newLength-1, permutedToken);             
-        if(newLength==2) 
-            printToken(permutedToken); 
-        rotate(newLength, permutedToken);		
-	}
-}
 
-void tokenCombinations(char *token, char *inputString)
-{
-	int tokenLength = strlen(token);
-	int range = tokenLength-2, nextTokenBeginAt = tokenLength-2, index = tokenLength-1, inputLength = strlen(inputString);
-	char *permutedToken = calloc( tokenLength+1, sizeof(char) ), *position, newPosition[inputLength];
-	
-	while(token[0] != inputString[(inputLength-1) - (tokenLength-1)] )
-	{
-		strcpy(permutedToken,token);
-		permutedToken[tokenLength] = '\0';
-		//printToken(token);
-		tokenPermutations(tokenLength, permutedToken);
-
-		index++;
-		if(index == inputLength)
-		{
-			while(inputLength-range-1 == tokenLength-nextTokenBeginAt-1)
-			{
-				position = strchr(inputString, token[nextTokenBeginAt-1]);
-				sprintf(newPosition, "%ld", position-inputString);
-				range = atoi(newPosition);
-				nextTokenBeginAt--;
-			}
-			
-			range++;
-			index = range + (tokenLength -1 -nextTokenBeginAt);
-			int plus = 0;
-			
-			for(int a = nextTokenBeginAt; a<tokenLength; a++)
-				token[a] = inputString[range+plus++];
-			nextTokenBeginAt = tokenLength-2;
-			
-			position = strchr(inputString, token[nextTokenBeginAt]);
-			sprintf(newPosition, "%ld", position-inputString );
-			range = atoi(newPosition); // we get the new value of range with the position
-		}
-		token[tokenLength-1] = inputString[index];
-	}
-	strcpy(permutedToken,token);
-	tokenPermutations(tokenLength, permutedToken);
-}
